@@ -1,8 +1,9 @@
 ---
 title: 比特币原理笔记
 categories:
- - tutorial
+ - 区块链
 tags:
+ - 区块链
 ---
 
 ### 1 数字
