@@ -1,6 +1,5 @@
 ---
 title: 比特币原理笔记
-description: 关于比特币的原理和笔记
 categories:
  - tutorial
 tags:
