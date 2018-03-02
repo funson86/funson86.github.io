@@ -1,6 +1,6 @@
 ---
-title: Next Theme Tutorial
-description: NexT is a high quality elegant Jekyll theme ported from Hexo Next. It is crafted from scratch, with love.
+title: 比特币原理笔记
+description: 关于比特币的原理和笔记
 categories:
  - tutorial
 tags:
