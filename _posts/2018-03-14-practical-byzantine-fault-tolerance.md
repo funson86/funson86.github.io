@@ -51,7 +51,7 @@ PBFT算法的核心理论是N>=3F+1，其中N是总节点数，F是故障节点�
 
 实际上PBFT会更复杂一些，分为预准备（pre-prepare）、准备(prepare)和确认(commit)
 
-![图片](./image/pbft.png)
+![图片](https://github.com/funson86/funson86.github.io/blob/master/_posts/image/pbft.png?raw=true)
 
 1. request：总统C向1发消息
 2. pre-prepare：服务端0收到C的请求后进行广播，扩散至123
