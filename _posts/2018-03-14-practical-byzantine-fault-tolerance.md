@@ -96,3 +96,8 @@ PBFT算法的核心理论是N>=3F+1，其中N是总节点数，F是故障节点�
 ## 5 总结
 1. PBFT算法要求知道节点数是确定的，比如22个节点，那么F可以为7，有15个节点的数据即可做决定，适合联盟链
 2. POW共识不限定节点数，不是实时结算的，一般而言6次确认之后基本上没有问题
+
+## 6 参考
+维基百科：[拜占庭将军问题](https://zh.wikipedia.org/wiki/%E6%8B%9C%E5%8D%A0%E5%BA%AD%E5%B0%86%E5%86%9B%E9%97%AE%E9%A2%98)
+
+[拜占庭问题与算法](https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/bft.html)
