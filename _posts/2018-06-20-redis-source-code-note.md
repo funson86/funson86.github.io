@@ -110,9 +110,10 @@ typedef struct dict {
 
 ### ziplist压缩链表：连续内存存储
 ziplist 连续存储，提高内存的使用率，可存储字符串和整数，进cpu缓存，每次插入都要重新分配内存。set使用的ziplist来实现
-<zlbytes><zltail><zllen><entry><entry><zlend>
 
 ```
+<zlbytes><zltail><zllen><entry><entry><zlend>
+
 typedef struct zlentry {
     unsigned int prevrawlensize, prevrawlen;
     unsigned int lensize, len;
