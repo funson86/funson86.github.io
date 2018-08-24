@@ -1,13 +1,12 @@
 ---
-title: 哈希算法与MD5、SHA
+title: redis源代码分析笔记
 categories:
- - 区块链
+ - 源码分析
 tags:
- - 区块链
+ - 源码分析
 ---
 
 ## redis单进程单线程
-
 main() 启动绑定端口，使用epoll事件机制，当有新的连接来的时候，使用acceptTcpHandler函数接收事件，如果是新的连接则新建一个socket接收，创建一个redisClient结构体，并新建一个用readQueryFromClient来处理的事件。
 
 在新的事件的readQueryFromClient中，从socket中读取客户端上传的指令，解析指令，调用call(c,REDIS_CALL_FULL)函数执行命令获得返回结果，调用addReply()函数新建一个用sendReplyToClient来处理的事件。
@@ -111,7 +110,7 @@ typedef struct dict {
 
 ### ziplist压缩链表：连续内存存储
 ziplist 连续存储，提高内存的使用率，可存储字符串和整数，进cpu缓存，每次插入都要重新分配内存。set使用的ziplist来实现
-<zlbytes><zltail><zllen><entry>...<entry><zlend>
+<zlbytes><zltail><zllen><entry><entry><zlend>
 
 ```
 typedef struct zlentry {
