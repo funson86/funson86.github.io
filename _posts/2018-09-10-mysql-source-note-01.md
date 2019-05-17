@@ -45,7 +45,38 @@ mysql在执行查询请求后，先去查询缓存中看看是不是执行过这
 - 可以在慢查询日志中看到rows_examined表示语句执行中扫描了多少行
 
 
-## mysql源码
+## mysql源码分析
 
-<a name="1.03">第一段</a>
+### <a name="1.03">mysql启动流程</a>
+
+- 启动文件在sql/mysqld.cc文件中
+- myssql_init() 调用mysys/my_init.c文件函数，初始化内部系统库
+- load_defaults() 读取my.cnf配置
+- logger.init_base(); 初始化日志
+- init_common_variables(); 初始化公共变量 包含init_thread_environment() mysql_init_variables()
+- my_init_signals 初始化信号
+- user_info= check_user(mysqld_user) 检测用户是否有权限启动
+- init_server_components() 初始化内部组件 MDL_map::init()MDL锁初始化  Query_cache::init()初始化查询缓存 randominit()随机数初始化 init_slave_list()如果主从复制初始化从库
+- network_init() 初始化网络，创建socket，监听端口
+- start_signal_handler() 创建pid文件
+- if (mysql_rm_tmp_tables() || acl_init(opt_noacl) || my_tz_init((THD *)0, default_tz_name, opt_bootstrap))  删除临时表 初始化数据库权限 初始化时区
+- init_status_vars() 初始化all_status_vars变量
+- create_shutdown_thread() windows下创建关闭线程
+- start_handle_manager() 创建管理线程 执行handle_manager(void *arg MY_ATTRIBUTE((unused)))函数
+- handle_connections_sockets() 处理连接socket
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
