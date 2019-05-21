@@ -69,9 +69,133 @@ InnoDB和XtraDB存储引擎通过MVCC和间隙锁解决幻读问题。
 
 缺点：每行记录需要额外的存储空间
 
+参考：
+
 [InnoDB MVCC实现原理及源码解析](https://blog.csdn.net/yanzongshuai/article/details/79949332)
 
+[InnoDB存储引擎MVCC实现原理](https://zhuanlan.zhihu.com/p/29532524)
 
 
+### InnoDB三种日志：
+
+- Bin Log 服务层日志，用来进行数据恢复、数据库复制，主从架构是master往slave传binlog实现的
+- Redo Log 数据在物理层面的修改，mysql使用大量缓存，修改操作直接修改内存，而不是直接修改磁盘。事务中不断产生redolog，在事务提交的时候一次修改保存到磁盘中。当数据库或者主机失效重启时，会根据redolog进行恢复。
+- Undo Log 数据修改时候记录undolog，根据undolog回溯摸个特定的版本，实现MVCC
+
+read_view_t主要包括3个数据成员{low_limit_id,up_limit_id,trx_ids}。
+
+- low_limit_id：表示创建read view时，当前事务活跃读写链表最大的事务ID，即最近创建的除自身外最大的事务ID
+- up_limit_id：表示创建read view时，当前事务活跃读写链表最小的事务ID。
+- trx_ids：创建read view时，活跃事务链表里所有事务ID
+
+对于RR隔离级别，则SQL语句结束后不会删除read_view，从而下一个SQL语句时，使用上次申请的，这样保证事务中的read view都一样，从而实现可重复读的隔离级别。
+对于可见性判断，分配聚集索引和二级索引。
+
+- 聚集索引：记录的DATA_TRX_ID < view->up_limit_id：在创建read view时，修改该记录的事务已提交，该记录可见 DATA_TRX_ID 位于（view->up_limit_id，view->low_limit_id）：需要在活跃读写事务数组查找trx_id是否存在，如果存在，记录对于当前read view是不可见的。
+- 由于InnoDB的二级索引只保存page最后更新的trx_id，当利用二级索引进行查询的时候，如果page的trx_id小于view->up_limit_id，可以直接判断page的所有记录对于当前view是可见的，否则需要回clustered索引进行判断。
+
+
+```
+//read0read.h
+struct read_view_t{
+	ulint		type;	/*!< VIEW_NORMAL, VIEW_HIGH_GRANULARITY */
+	undo_no_t	undo_no;/*!< 0 or if type is
+				VIEW_HIGH_GRANULARITY
+				transaction undo_no when this high-granularity
+				consistent read view was created */
+	trx_id_t	low_limit_no;
+				/*!< The view does not need to see the undo
+				logs for transactions whose transaction number
+				is strictly smaller (<) than this value: they
+				can be removed in purge if not needed by other
+				views */
+	trx_id_t	low_limit_id;
+				/*!< The read should not see any transaction
+				with trx id >= this value. In other words,
+				this is the "high water mark". */
+	trx_id_t	up_limit_id;
+				/*!< The read should see all trx ids which
+				are strictly smaller (<) than this value.
+				In other words,
+				this is the "low water mark". */
+	ulint		n_trx_ids;
+				/*!< Number of cells in the trx_ids array */
+	trx_id_t*	trx_ids;/*!< Additional trx ids which the read should
+				not see: typically, these are the read-write
+				active transactions at the time when the read
+				is serialized, except the reading transaction
+				itself; the trx ids in this array are in a
+				descending order. These trx_ids should be
+				between the "low" and "high" water marks,
+				that is, up_limit_id and low_limit_id. */
+	trx_id_t	creator_trx_id;
+				/*!< trx id of creating transaction, or
+				0 used in purge */
+	UT_LIST_NODE_T(read_view_t) view_list;
+				/*!< List of read views in trx_sys */
+};
+
+bool
+lock_clust_rec_cons_read_sees(
+/*==========================*/
+	const rec_t*	rec,	/*!< in: user record which should be read or
+				passed over by a read cursor */
+	dict_index_t*	index,	/*!< in: clustered index */
+	const ulint*	offsets,/*!< in: rec_get_offsets(rec, index) */
+	read_view_t*	view)	/*!< in: consistent read view */
+{
+	trx_id_t	trx_id;
+
+	ut_ad(dict_index_is_clust(index));
+	ut_ad(page_rec_is_user_rec(rec));
+	ut_ad(rec_offs_validate(rec, index, offsets));
+
+	/* NOTE that we call this function while holding the search
+	system latch. */
+
+	trx_id = row_get_rec_trx_id(rec, index, offsets);
+
+	return(read_view_sees_trx_id(view, trx_id));
+}
+
+bool
+read_view_sees_trx_id(
+/*==================*/
+	const read_view_t*	view,	/*!< in: read view */
+	trx_id_t		trx_id)	/*!< in: trx id */
+{
+	if (trx_id < view->up_limit_id) {//小于最小trx_id，可见
+
+		return(true);
+	} else if (trx_id >= view->low_limit_id) {//大于最大trx_id，不可见
+
+		return(false);
+	} else { // 用二分法查询是否在trx_ids里面，如果在，则不可见
+		ulint	lower = 0;
+		ulint	upper = view->n_trx_ids - 1;
+
+		ut_a(view->n_trx_ids > 0);
+
+		do {
+			ulint		mid	= (lower + upper) >> 1;
+			trx_id_t	mid_id	= view->trx_ids[mid];
+
+			if (mid_id == trx_id) {
+				return(FALSE);
+			} else if (mid_id < trx_id) {
+				if (mid > 0) {
+					upper = mid - 1;
+				} else {
+					break;
+				}
+			} else {
+				lower = mid + 1;
+			}
+		} while (lower <= upper);
+	}
+
+	return(true);
+}
+```
 
 
