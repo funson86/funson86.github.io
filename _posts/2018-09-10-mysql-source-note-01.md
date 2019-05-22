@@ -1,5 +1,5 @@
 ---
-title: Mysql源码分析1
+title: Mysql源码分析1 - 基础架构
 categories:
  - 源码分析 
 tags:
