@@ -171,14 +171,25 @@ int8_t contents[];
 ```
 
 ## redis数据淘汰机制：
-volatile-lru(过期最近最少使用) / allkeys-lru(所有Key最近最少使用) / volatile-ttl(过期最长事件) / volatile-random(过期随机) / allkeys-random (所有key随机)
+
+- volatile-lru(过期最近最少使用) 
+- allkeys-lru(所有Key最近最少使用) 
+- allkeys-random (所有key随机)
+- volatile-ttl(过期最长事件)
+- volatile-random(过期随机)
+
 在主线程中
+
+```
     while (!eventLoop->stop) {
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
     }
+```
+
 会不停的处理eventLoop中得文件事件FileEvent和定时事件TimeEvent。
+
 
 ## redis持久化rdb全量备份到文件dump.db
 serverCron定时程序中rdbSaveBackground，在子进程中rdbSave中调用rdbSaveRio函数。
