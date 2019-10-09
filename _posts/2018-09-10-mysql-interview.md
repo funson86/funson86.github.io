@@ -6,6 +6,8 @@ tags:
  - mysql源码分析
 ---
 
+[toc]
+
 ### MySQL的复制原理以及流程
 1. 主：binlog线程——记录下所有改变了数据库数据的语句，放进master上的binlog中； 
 2. 从：io线程——在使用start slave 之后，负责从master上拉取 binlog 内容，放进 自己的relay log中； 

@@ -4,6 +4,7 @@ categories:
  - 源码分析
 tags:
  - 源码分析
+ - redis
 ---
 
 ## redis单进程单线程
