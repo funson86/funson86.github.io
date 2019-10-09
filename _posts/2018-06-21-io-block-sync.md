@@ -1,17 +1,18 @@
 ---
-title: memcache和redis比较
+title: IO模型
 categories:
- - IO模型
+ - Linux
 tags:
- - memcache
- - redis
+ - IO模型
+ - Redis
+ - Nginx
 ---
 
-# Memcache
+# Unix5种IO模型
 
 Unix和Linux有5中I/O模型
 
-[IO模型](https://github.com/funson86/funson86.github.io/blob/master/_posts/image/io-model.png)
+![IO模型](https://github.com/funson86/funson86.github.io/blob/master/_posts/image/io-model.png?raw=true)
 
 类比你管理一个国际化景区，有中餐厅/英餐厅/意大利餐厅/西班牙餐厅等等，这些餐厅共用一个厨房。
 
@@ -28,7 +29,7 @@ Unix和Linux有5中I/O模型
 
 io多路复用有select/poll/epoll三种，接着上面的景区装了个大屏幕可以看到每个餐厅的录像，你在监控室一直盯着屏幕上哪个餐厅有人（等待数据可选择阻塞），再去对应的餐厅收钱写菜单（将数据从内核复制到用户空间），再去厨房炒菜并端到对应餐厅。
 
-[io多路复用](https://github.com/funson86/funson86.github.io/blob/master/_posts/image/io-multi.png)
+![io多路复用](https://github.com/funson86/funson86.github.io/blob/master/_posts/image/io-multi.png?raw=true)
 
 - select ： 大屏幕只能分成1024(x86)或者2048(x64)格，每次都要从第一个格子看到最后，眼睛会看花
 - poll ： 大屏幕可以分成无限多的格，每次都要从第一个格子看到最后，眼睛也会看花
